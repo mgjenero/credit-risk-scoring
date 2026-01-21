@@ -11,7 +11,7 @@ The model can be used by:
 * Credit scoring systems
 * Risk assessment pipelines
 
-The output is a **probability of default** and a **binary decision** (`will_default`).
+The output is a **probability of default** (0.0-1.0) and a **binary decision** (`will_default`).
 
 ---
 
@@ -71,10 +71,10 @@ Multiple models were trained and compared:
 
 | Model               | ROC-AUC    |
 | ------------------- | ---------- |
-| Logistic Regression | ~0.78      |
-| Random Forest       | ~0.84      |
-| LightGBM            | ~0.86      |
-| **XGBoost (final)** | **0.8662** |
+| Logistic Regression | 0.7885      |
+| Random Forest       | 0.8603      |
+| LightGBM            | 0.8657      |
+| **XGBoost** ✅      | **0.8662** |
 
 The final deployed model is **XGBoost**, tuned using GridSearchCV.
 
@@ -97,7 +97,6 @@ src/preprocessing.py
 Steps include:
 
 * Missing value handling
-* Fixed median imputation for inference consistency
 * Feature engineering:
 
   * `DebtPerDependent`
@@ -129,19 +128,35 @@ models/model.bin
 
 ## 🌐 Model Deployment (FastAPI)
 
-The model is deployed as a **REST API** using FastAPI.
+The model is deployed as a production-ready REST API.
 
-### Run the API locally
+### Quick Start
 
 ```bash
+# Install dependencies
+uv sync
+
+# Activate environment
+source .venv/bin/activate
+
+# Run API locally
 uvicorn src.app:app --reload
 ```
 
-### API Endpoint
+API runs on: `http://localhost:8000`
 
-**POST** `/predict`
+### Interactive Documentation
 
-Example request:
+FastAPI provides automatic API documentation:
+- **Swagger UI**: http://localhost:8000/docs – Full interactive API with field hints and constraints
+- **ReDoc**: http://localhost:8000/redoc – Alternative documentation UI
+
+### Endpoints
+
+#### `/predict` (POST)
+Predict credit default for a customer.
+
+**Request:**
 
 ```json
 {
@@ -158,8 +173,7 @@ Example request:
 }
 ```
 
-Example response:
-
+**Response:**
 ```json
 {
   "default_probability": 0.13,
@@ -167,57 +181,60 @@ Example response:
 }
 ```
 
+**Status Codes:**
+- `200` – Success
+- `422` – Validation error (invalid inputs)
+- `500` – Server error (model not found, prediction error)
+
 ---
 
 ## 📦 Dependency Management
 
 This project uses **uv** for dependency and environment management.
 
-Install dependencies:
+### Install Dependencies
 
 ```bash
+# Install all dependencies (including dev tools)
 uv sync
+
+# Install production only (for deployment)
+uv sync --no-dev
 ```
 
-Activate environment:
+### Dependency Groups
 
-```bash
-source .venv/bin/activate
-```
+**Production** (API runtime):
+- fastapi, uvicorn – Web framework
+- xgboost, scikit-learn – ML models
+- pandas, pydantic – Data processing & validation
+- joblib – Model serialization
 
-Dependencies are defined in:
+**Development** (training & notebooks):
+- lightgbm, kagglehub – Model training
+- matplotlib, seaborn – Plotting
+- nbconvert – Notebook tools
 
-```
-pyproject.toml
-uv.lock
-```
+Dependencies defined in: `pyproject.toml` and `uv.lock`
 
 ---
 
-## 🐳 Containerization
+## 🐳 Docker Deployment
 
-Build Docker image:
+Build and run containerized API:
 
 ```bash
+# Build image
 docker build -t credit-risk-api .
-```
 
-Run container:
-
-```bash
+# Run container
 docker run -p 8000:8000 credit-risk-api
 ```
 
----
-
-## ☁️ Cloud Deployment
-
-The application can be deployed to:
-
-* Any Docker-compatible cloud (AWS, GCP, Azure)
-* Kubernetes
-* Render / Fly.io / Railway
-
-The Docker image exposes port `8000`.
+Container details:
+- **Base Image**: Python 3.12-slim
+- **Port**: 8000
+- **Entry Point**: Uvicorn serving `src.app:app`
+- **Dependencies**: Production only (--no-dev)
 
 ---
