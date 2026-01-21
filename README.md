@@ -1,4 +1,7 @@
 # Credit Risk Scoring
+App is currently deployed and you can acces here: https://credit-risk-scoring-waky.onrender.com/docs#/ <br>IMPORTANT: App also needs some time to wake up so be patient :) 
+
+---
 
 ## 📌 Problem Description
 
